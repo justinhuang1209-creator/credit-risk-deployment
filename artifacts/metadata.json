@@ -1,0 +1,38 @@
+{
+  "trial": 4,
+  "threshold": 0.5,
+  "features": [
+    "LIMIT_BAL",
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE",
+    "AGE",
+    "PAY_0",
+    "PAY_2",
+    "PAY_3",
+    "PAY_4",
+    "PAY_5",
+    "PAY_6",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "PAY_AMT4",
+    "PAY_AMT5",
+    "PAY_AMT6"
+  ],
+  "education_mapping": {
+    "5": 0,
+    "6": 0
+  },
+  "selection": "Highest validation default F1 among 8 trials",
+  "validation_f1": 0.5018,
+  "test_accuracy": 0.8205,
+  "test_f1": 0.4864091559370529,
+  "source_run": "tuning_20261112_163323_916406"
+}
