@@ -3,31 +3,20 @@ title: Credit Risk Prediction
 emoji: 📊
 colorFrom: blue
 colorTo: green
-sdk: docker
-app_port: 7860
+sdk: static
+app_file: index.html
 ---
 
-# Module 10 deployment draft
+# Module 10: browser-based model deployment
 
-This application serves Module 8 Trial 4, selected by validation default F1 among eight configurations. It uses the original fitted Module 5 preprocessor (23 original features to 89 model inputs) and unchanged model weights. EDUCATION codes 5 and 6 map to 0 before transformation.
+This Static Space runs the unchanged Module 8 Trial 4 neural network in the browser. The exported model contains its trained weights, fitted numerical means/scales, and fitted one-hot category order. EDUCATION 5 and 6 are mapped to 0. Unseen valid categories produce all-zero one-hot blocks, matching the Python preprocessor. No retraining is performed.
 
-Architecture: 89 → 64 ReLU → 32 ReLU → 1 sigmoid. Training learning rate 0.0005, batch size 32, selected epoch 6. Fixed classification threshold 0.5. Test accuracy 0.8205, default F1 0.486409. Tuning did not improve on the baseline test results. This course demonstration is not validated for lending decisions.
+Trial 4 was selected using validation default F1 among eight configurations. Test accuracy was 82.05%, recall 38.43%, and F1 0.4864; tuning did not improve the baseline test results. The fixed classification threshold is 0.5.
 
-## Local use
+The initial Docker design was replaced because the account's Space creation page required a paid plan for Docker/Gradio. Static hosting serves the HTML, JavaScript and model weights, while inference runs on the visitor's device. It is not a Python server or a hosted prediction API. Model weights are public. Form values are not sent to a prediction server.
 
-Use Python 3.11. Install `requirements.txt`, run `python -m unittest test_prediction.py`, then `python app.py`. Open http://localhost:7860. The application does not retrain the model.
+The deployed files are index.html, inference.js, model.json, and this README. The original Python artifacts can remain in GitHub for provenance. CI/CD setup is a separate step; creating this Space alone does not complete CI/CD.
 
-## Deployment setup (not yet executed)
+Limitations: historical dataset, low default recall, uncalibrated probability estimates, no authentication or drift monitoring, browser-dependent performance, and no automated retraining. This is a course demonstration, not a lending decision system.
 
-1. Create a GitHub repository and upload the contents of this directory at its root, including `.github/workflows/deploy.yml`.
-2. Create a Docker Space on Hugging Face with free CPU basic hardware; confirm pricing at creation.
-3. Set GitHub repository variable `HF_SPACE_ID` to `username/space-name`.
-4. Set GitHub Actions secret `HF_TOKEN` to a Hugging Face token permitted to write to that Space. Never put the token in source code or chat.
-5. Push to `main`. Tests must pass before synchronization. Check both the GitHub Actions result and the Space build/runtime logs; synchronization success alone does not prove the application is healthy.
-6. Test a fictional profile in the hosted interface and retain screenshots, URLs and commit ID for the report.
-
-The included workflow performs CI checks and deployment synchronization. It does not implement retraining, drift monitoring, automated rollback or a hosted prediction health check. Gradio has a bounded version range and should be pinned to the verified version after a clean build. Linux container and hosted behavior still require verification.
-
-Only the fitted preprocessor is exported from the original joblib bundle; customer IDs and training/test records are excluded.
-
-References: https://huggingface.co/docs/hub/spaces-github-actions and https://huggingface.co/docs/hub/spaces-sdks-docker
+Sources: https://huggingface.co/docs/hub/spaces-overview and https://huggingface.co/docs/hub/spaces-sdks-static

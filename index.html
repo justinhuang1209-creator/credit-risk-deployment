@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Credit Risk Prediction</title>
+<style>
+body{font:16px system-ui,sans-serif;margin:0;background:#f2f5f9;color:#182a40}main{max-width:1000px;margin:40px auto;padding:24px}h1{font-size:36px;margin:10px 0}p{line-height:1.6}.eyebrow{color:#286c80;font-weight:700}fieldset{background:white;border:1px solid #dbe2ec;border-radius:12px;padding:22px;margin:24px 0}legend{font-weight:700}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}label{display:block;font-size:14px}input,select{display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:11px;border:1px solid #acbac9;border-radius:6px;background:white;font:inherit}button{padding:14px 24px;background:#165d79;color:white;border:0;border-radius:8px;font:inherit;cursor:pointer}button:disabled{opacity:.5}#result{padding:24px;background:#e1f0f4;border-radius:12px;margin:24px 0;font-size:20px;white-space:pre-line}small{color:#536477}footer{margin-top:32px;color:#536477}@media(max-width:650px){.grid{grid-template-columns:1fr}main{margin:0;padding:20px}h1{font-size:28px}}
+</style></head><body><main>
+<div class="eyebrow">MODULE 10 · CREDIT RISK PROJECT</div><h1>Explore a client’s predicted default risk</h1>
+<p>Enter a fictional client profile to estimate next-month default using the tuned neural network from Module 8. Amounts are in New Taiwan dollars (NT$).</p>
+<p><small>Calculations run in your browser. This form does not send entered values to a prediction server. This course model is not validated for lending decisions.</small></p>
+<form id="form"><fieldset><legend>Client profile</legend><div class="grid" id="profile"></div></fieldset>
+<fieldset><legend>Repayment status</legend><p><small>Original dataset codes are retained: −1 = paid duly; 1–8 = months of delay. Codes −2 and 0 have no definition in the supplied data dictionary. Most recent month first.</small></p><div class="grid" id="repayment"></div></fieldset>
+<fieldset><legend>Bill statements · NT$</legend><p><small>Negative statement balances are permitted.</small></p><div class="grid" id="bills"></div></fieldset>
+<fieldset><legend>Previous payments · NT$</legend><div class="grid" id="payments"></div></fieldset>
+<button id="submit" disabled>Loading model…</button></form>
+<div id="result" role="status" aria-live="polite">Loading the prediction model…</div>
+<footer>Trial 4 · 64 / 32 hidden units · Decision threshold 50%<br>Module 8 test accuracy: 82.05% · Default recall: 38.43% · Default F1: 0.4864<br>The model missed many defaults. Its probability estimates have not been independently calibrated.</footer>
+</main><script src="inference.js"></script><script>
+let model;
+const names={LIMIT_BAL:'Credit limit (NT$)',SEX:'Sex (dataset code)',EDUCATION:'Education',MARRIAGE:'Marital status',AGE:'Age'};
+const choices={SEX:[[1,'1 — Male'],[2,'2 — Female']],EDUCATION:[[0,'0 — Unknown'],[1,'1 — Graduate school'],[2,'2 — University'],[3,'3 — High school'],[4,'4 — Other'],[5,'5 — Unknown'],[6,'6 — Unknown']],MARRIAGE:[[0,'0 — Unknown'],[1,'1 — Married'],[2,'2 — Single'],[3,'3 — Other']]};
+const months=['September','August','July','June','May','April'];
+fetch('model.json').then(r=>{if(!r.ok)throw Error('Model download failed');return r.json()}).then(m=>{
+ model=m;
+ for(const key of m.features){
+  let group='profile',label=names[key]||key;
+  if(key.startsWith('BILL_AMT')){group='bills';label=months[Number(key.slice(8))-1]+' · '+key;}
+  else if(key.startsWith('PAY_AMT')){group='payments';label=months[Number(key.slice(7))-1]+' · '+key;}
+  else if(key.startsWith('PAY_')){group='repayment';label=months[['PAY_0','PAY_2','PAY_3','PAY_4','PAY_5','PAY_6'].indexOf(key)]+' · '+key;}
+  const wrapper=document.createElement('label');wrapper.textContent=label;
+  const options=choices[key]||(group==='repayment'?[-2,-1,0,1,2,3,4,5,6,7,8].map(v=>[v,String(v)]):null);
+  const input=document.createElement(options?'select':'input');input.name=key;input.required=true;
+  if(options)for(const [v,t]of options){const o=document.createElement('option');o.value=v;o.textContent=t;input.append(o);}
+  else{input.type='number';input.step=key==='AGE'?'1':'any';if(group==='payments')input.min=0;if(key==='AGE'){input.min=18;input.max=120;}if(key==='LIMIT_BAL')input.min=1;}
+  input.value=({LIMIT_BAL:100000,AGE:35,SEX:2,EDUCATION:2,MARRIAGE:1})[key]??0;
+  wrapper.append(input);document.getElementById(group).append(wrapper);
+ }
+ document.getElementById('submit').disabled=false;document.getElementById('submit').textContent='Calculate prediction';document.getElementById('result').textContent='Ready. Review the example values, then calculate a prediction.';
+}).catch(e=>document.getElementById('result').textContent='Unable to load model. Please reload the page. '+e.message);
+document.getElementById('form').addEventListener('submit',e=>{e.preventDefault();try{const r=creditPredict(model,Object.fromEntries(new FormData(e.target)));document.getElementById('result').textContent=(r.prediction?'Predicted default (1)':'Predicted no default (0)')+'\nEstimated default probability: '+(100*r.probability).toFixed(2)+'%\nThreshold: 50%';}catch(err){document.getElementById('result').textContent=err.message;}});
+</script></body></html>
