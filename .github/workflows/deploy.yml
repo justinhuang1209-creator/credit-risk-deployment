@@ -1,0 +1,38 @@
+name: Test and deploy Static Space
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node test_static.cjs
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: huggingface/hub-sync@v0.3.0
+        with:
+          github_repo_id: ${{ github.repository }}
+          huggingface_repo_id: Justinhuang1209/credit-risk-deployment
+          hf_token: ${{ secrets.HF_TOKEN }}
+          repo_type: space
+          space_sdk: static
